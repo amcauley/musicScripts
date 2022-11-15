@@ -1,0 +1,116 @@
+<html>
+<script>
+    // Greatest common denominator. Both inputs should be positive integers.
+    function gcd2(a, b) {
+        var smallest = Math.min(a, b);
+
+        for (var i = 2; i <= smallest; i++) {
+            if ((a % i == 0) && (b % i == 0)) {
+                return i * gcd2(a / i, b / i);
+            }
+        }
+
+        return 1;
+    }
+
+    // Least common multiple. Both inputs should be positive integers.
+    function lcm2(a, b) {
+        return (a * b) / gcd2(a, b);
+    }
+
+    // Least common multiple of a list of positive integers.
+    function lcm(l) {
+        var out = l[0];
+
+        for (var i = 1; i < l.length; i++) {
+            out = lcm2(out, l[i]);
+        }
+
+        return out;
+    }
+
+    // Get a new entry, i.e. a dict of keys and values that define a user input
+    function blankEntry(bActive=true) {
+        return {
+            'bActive': bActive, // Should this entry be used in computations?
+            'num': 4, // Time signature numerator
+            'den': 4, // Time signature denominator
+            'bars': bActive ? '1' : '-', // Full bars until this time signature syncs with others
+        }
+    }
+
+    var gEntries = [blankEntry(), blankEntry(), blankEntry(false), blankEntry(false), blankEntry(false)];
+
+    // Update the values for all entries in gEntries
+    function updateEntries() {
+        var nums = []
+        var idx = 0;
+        for (e of gEntries) {
+            e['bActive']  = document.getElementById('bActive_' + idx).checked;
+            e['num'] = document.getElementById('num_' + idx).value;
+            idx++;
+
+            if (e['bActive']) {
+                nums.push(e['num']);
+            }
+            else {
+                e['bars'] = '-';
+            }
+        }
+
+        var nBeats = lcm(nums);
+
+        for (e of gEntries) {
+            if (!e['bActive']) {
+                continue;
+            }
+            e['bars'] = nBeats / e['num'];
+        }
+    }
+
+    function updatedTableHtml() {
+        var s = '<table><tr><tr><th>Active</th><th>Time Signature</th><th>Bars</th></tr>';
+
+        var idx = 0;
+        for (e of gEntries) {
+            s += '<tr>';
+
+            s += '<td><input type="checkbox" id="bActive_' + idx + '" onchange="updateTable()"';
+            if (e['bActive']) {
+                s += ' checked';
+            }
+            s += '></input></td>';
+
+            s += '<td><input type="number" step="1" min="1" id="num_' + idx + '" value="' + e["num"] + '" style="width: 5ch" onchange="updateTable()">';
+            s += ' / ' + e['den'] + '</td>';
+
+            s += '<td>' + e['bars'] + '</td>';
+
+            s += '</tr>';
+
+            idx++;
+        }
+        s += '</table>';
+
+        return s;
+    }
+
+    function updateTable() {
+        updateEntries();
+        console.log(gEntries);
+        displayTable();
+    }
+
+    function displayTable() {
+        var t = document.getElementById('tableDiv');
+        t.innerHTML = updatedTableHtml();
+    }
+
+    window.onload = displayTable;
+</script>
+
+<body>
+    <div id='tableDiv'></div>
+</body>
+
+</html>
