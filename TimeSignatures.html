@@ -1,4 +1,16 @@
 <html>
+
+<style>
+th, td, input {
+    font-size: 25px;
+}
+
+td {
+    text-align: center;
+}
+
+</style>
+
 <script>
     // Greatest common denominator. Both inputs should be positive integers.
     function gcd2(a, b) {
@@ -30,25 +42,24 @@
     }
 
     // Get a new entry, i.e. a dict of keys and values that define a user input
-    function blankEntry(bActive=true) {
+    function newEntry(num=4, bActive=true) {
         return {
             'bActive': bActive, // Should this entry be used in computations?
-            'num': 4, // Time signature numerator
+            'num': num, // Time signature numerator
             'den': 4, // Time signature denominator
             'bars': bActive ? '1' : '-', // Full bars until this time signature syncs with others
         }
     }
 
-    var gEntries = [blankEntry(), blankEntry(), blankEntry(false), blankEntry(false), blankEntry(false)];
-
     // Update the values for all entries in gEntries
     function updateEntries() {
         var nums = []
-        var idx = 0;
-        for (e of gEntries) {
+
+        for (var idx = 0; idx < gEntries.length; idx++) {
+            var e = gEntries[idx];
+
             e['bActive']  = document.getElementById('bActive_' + idx).checked;
             e['num'] = document.getElementById('num_' + idx).value;
-            idx++;
 
             if (e['bActive']) {
                 nums.push(e['num']);
@@ -69,10 +80,12 @@
     }
 
     function updatedTableHtml() {
-        var s = '<table><tr><tr><th>Active</th><th>Time Signature</th><th>Bars</th></tr>';
+        var s = '<table border="1"><tr><tr><th>&nbsp;Active&nbsp;</th><th>&nbsp;Time Signature&nbsp;</th><th>&nbsp;Bars Until Sync&nbsp;</th><th>&nbsp;Explanation&nbsp;</th></tr>';
 
         var idx = 0;
-        for (e of gEntries) {
+        for (var idx = 0; idx < gEntries.length; idx++) {
+            var e = gEntries[idx];
+
             s += '<tr>';
 
             s += '<td><input type="checkbox" id="bActive_' + idx + '" onchange="updateTable()"';
@@ -81,23 +94,30 @@
             }
             s += '></input></td>';
 
-            s += '<td><input type="number" step="1" min="1" id="num_' + idx + '" value="' + e["num"] + '" style="width: 5ch" onchange="updateTable()">';
+            s += '<td><input type="number" step="1" min="1" id="num_' + idx + '" value="' + e["num"] + '" style="width: 4ch" onchange="updateTable()">';
             s += ' / ' + e['den'] + '</td>';
 
             s += '<td>' + e['bars'] + '</td>';
 
-            s += '</tr>';
+            var explanation = '-'
+            if (e['bActive']){
+                var beats = e['bars'] * e['num'];
+                explanation = 'The time signatures sync after ' + beats + ' beats, which is ' + e['bars'] + ' bars of ' + e['num'] + '/4.';
+            }
 
-            idx++;
+            s += '<td>' + explanation + '</td>';
+
+            s += '</tr>';
         }
         s += '</table>';
 
         return s;
     }
 
+    var gEntries = [newEntry(3), newEntry(4), newEntry(5, false), newEntry(7, false)];
+
     function updateTable() {
         updateEntries();
-        console.log(gEntries);
         displayTable();
     }
 
@@ -106,10 +126,17 @@
         t.innerHTML = updatedTableHtml();
     }
 
-    window.onload = displayTable;
+    function init() {
+        // First "display" the table to create it, then run the update routine
+        displayTable();
+        updateTable();
+    }
+
+    window.onload = init;
 </script>
 
 <body>
+    <p>This page let's you enter multiple time signatures and see how long it'll take for them to sync up.</p>
     <div id='tableDiv'></div>
 </body>
 
