@@ -53,29 +53,43 @@ td {
 
     // Update the values for all entries in gEntries
     function updateEntries() {
-        var nums = []
+        var nums = [];
+        var dens = [];
 
         for (var idx = 0; idx < gEntries.length; idx++) {
             var e = gEntries[idx];
 
             e['bActive']  = document.getElementById('bActive_' + idx).checked;
             e['num'] = document.getElementById('num_' + idx).value;
+            e['den'] = document.getElementById('den_' + idx).value;
 
             if (e['bActive']) {
                 nums.push(e['num']);
+                dens.push(e['den']);
             }
             else {
                 e['bars'] = '-';
             }
         }
 
-        var nBeats = lcm(nums);
+        // Compute common denominator as LCM of all denominators.
+        // Ex) 4/4 and 7/8 could be represented as a denom of 8 (8/8 and 7/8), at least for timing purposes. 
+        var lcmDen = lcm(dens);
+
+        var numsAdj = [];
+        for (var idx = 0; idx < nums.length; idx++) {
+            var numAdj = nums[idx] * lcmDen / dens[idx];
+            numsAdj.push(numAdj);
+        }
+        var nBeats = lcm(numsAdj);
 
         for (e of gEntries) {
             if (!e['bActive']) {
                 continue;
             }
-            e['bars'] = nBeats / e['num'];
+            // Convert beats (in terms of common denom) back into orig time signature's denom,
+            // then figure out how many bars that is.
+            e['bars'] = nBeats * (e['den'] / lcmDen) / e['num'];
         }
     }
 
@@ -93,16 +107,35 @@ td {
                 s += ' checked';
             }
             s += '></input></td>';
+            s += '<td>';
 
-            s += '<td><input type="number" step="1" min="1" id="num_' + idx + '" value="' + e["num"] + '" style="width: 4ch" onchange="updateTable()">';
-            s += ' / ' + e['den'] + '</td>';
+            s += '<input type="number" step="1" min="1" id="num_' + idx + '" value="' + e["num"] + '" style="width: 4ch" onchange="updateTable()">';
+            s += ' / ';
+
+            var denOptions = [4, 8, 16];
+            var denNames = {
+                4: 'quarter',
+                8: 'eigth',
+                16: 'sixteenth',
+            };
+
+            s += '<select id="den_' + idx + '" style="height: 5ch" onchange="updateTable()">';
+            for (var denIdx = 0; denIdx < denOptions.length; denIdx++) {
+                var denOption = denOptions[denIdx];
+                s += '<option value="' + denOption + '"';
+                if (denOption == e["den"]) {
+                    s += " selected";
+                }
+                s += '>' + denOption + '</option>';
+            }
+            s += '</select></td>';
 
             s += '<td>' + e['bars'] + '</td>';
 
             var explanation = '-'
             if (e['bActive']){
                 var beats = e['bars'] * e['num'];
-                explanation = 'The time signatures sync after ' + beats + ' beats, which is ' + e['bars'] + ' bars of ' + e['num'] + '/4.';
+                explanation = 'The time signatures sync after ' + beats + ' ' + denNames[e['den']] + ' notes, which is ' + e['bars'] + ' bars of ' + e['num'] + '/' + e['den'] + '.';
             }
 
             s += '<td>' + explanation + '</td>';
